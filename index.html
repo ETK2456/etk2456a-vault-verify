@@ -1,0 +1,42 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#00FF88">
+<link rel="manifest" href="./manifest.json">
+<title>ETK2456a Lagos Vault - TJ3</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0f0a;color:#fff;font-family:system-ui;padding:16px}
+.card{background:#111a11;border:1px solid #1e3a1e;border-radius:16px;padding:16px;margin:12px 0}
+h1{color:#00FF88;font-size:22px}
+b{color:#00FF88}
+.log{background:#000;border-radius:8px;padding:10px;font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>🟢 TJ3 Vault - Fixed ✅</h1>
+<div class="card">
+<div>TRX Balance</div>
+<div><b>1248.53 TRX</b></div>
+<div style="margin-top:8px">USDT Balance</div>
+<div><b>5341.06 USDT</b></div>
+<div style="margin-top:8px;font-size:11px;opacity:.7">TJ3mVlTp • 3 Owners • 0/2 Multisig • TRON Mainnet</div>
+</div>
+<div class="card">
+<div>Vault Status</div>
+<div id="log" class="log">> Loading... checking offline support</div>
+</div>
+<script>
+const logEl=document.getElementById('log');
+if('serviceWorker' in navigator){
+ navigator.serviceWorker.register('./sw.js')
+ .then(()=>{logEl.innerHTML+='<br>> ✅ SW registered - offline capable - APK ready';})
+ .catch(e=>{logEl.innerHTML+='<br>> ❌ SW fail: '+e;});
+} else {
+ logEl.innerHTML+='<br>> ❌ No ServiceWorker support';
+}
+</script>
+</body>
+</html>
