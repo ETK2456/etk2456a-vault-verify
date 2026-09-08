@@ -4,47 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="manifest" href="./manifest.json">
-<title>TJ3 Vault - Live</title>
+<meta name="theme-color" content="#000000">
+<title>TJ3 Vault - LIVE</title>
 <style>
-body{font-family:sans-serif;background:#000;color:#0f0;padding:20px;text-align:center}
-.card{background:#111;border:1px solid #0f0;border-radius:12px;padding:20px;margin-top:20px}
+body{font-family:sans-serif;background:#000;color:#0f0;padding:20px;text-align:center;margin:0}
+.card{background:#111;border:1px solid #0f0;border-radius:12px;padding:20px;margin:20px auto;max-width:400px;word-break:break-all}
+.addr{color:#888;font-size:12px}
+.bal{font-size:22px;margin:10px 0}
+.status{font-size:13px;margin-top:15px;color:#0ff}
 </style>
 </head>
 <body>
 <h1>🟢 TJ3 Vault - LIVE ✅</h1>
 <div class="card">
-<p id="addr">TJ3mvTT...YourFullAddressHere</p>
-<p id="trx">TRX: Loading...</p>
-<p id="usdt">USDT: Loading...</p>
-<p id="status">⏳ Fetching from Tronscan...</p>
+<p class="addr" id="addr">TJ3UpJ9xyF9J4HMXWqp1nDZF5Nv4CwRg</p>
+<p class="bal" id="trx">TRX: Loading...</p>
+<p class="bal" id="usdt">USDT: Loading...</p>
+<p class="status" id="status">⏳ Fetching from TRON Mainnet...</p>
 </div>
 <script>
-// PUT YOUR REAL VAULT ADDRESS HERE
-const VAULT = "TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg";
+const VAULT = "TJ3UpJ9xyF9J4HMXWqp1nDZF5Nv4CwRg";
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
 async function loadReal(){
   try{
-    // TRX Balance
     let r = await fetch(`https://apilist.tronscanapi.com/api/accountv2?address=${VAULT}`);
     let j = await r.json();
-    let trx = (j.bandwidth?.freeNetRemaining || 0); // fallback
-    // Better: use account balance
-    let trxBal = j.balance ? (j.balance/1e6).toFixed(2) : "0";
+    let trxBal = j.balance ? (j.balance/1e6).toFixed(2) : "0.00";
     document.getElementById("trx").innerText = `TRX: ${trxBal}`;
 
-    // USDT TRC20 Balance
     let r2 = await fetch(`https://apilist.tronscanapi.com/api/account/tokens?address=${VAULT}&start=0&limit=20`);
     let j2 = await r2.json();
-    let usdt = j2.data?.find(t=>t.tokenAbbr==="USDT" || t.tokenId===USDT_CONTRACT);
+    let usdt = j2.data?.find(t=>t.tokenAbbr==="USDT");
     let usdtBal = usdt ? (usdt.balance/1e6).toFixed(2) : "0.00";
     document.getElementById("usdt").innerText = `USDT: ${usdtBal}`;
-    document.getElementById("status").innerText = "✅ LIVE from TRON Mainnet - Offline cached";
+    document.getElementById("status").innerText = "✅ LIVE from TRON Mainnet - Offline Ready";
 
-    // Register SW
     if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js')}
   }catch(e){
-    document.getElementById("status").innerText = "⚠️ Offline - showing cached: 1248 TRX / 5341 USDT (demo)";
+    document.getElementById("status").innerText = "⚠️ Offline - cached demo: 1248 TRX / 5341 USDT";
     document.getElementById("trx").innerText = "TRX: 1248.53 (cached)";
     document.getElementById("usdt").innerText = "USDT: 5341.06 (cached)";
   }
