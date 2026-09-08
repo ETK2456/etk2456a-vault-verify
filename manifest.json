@@ -1,0 +1,13 @@
+{
+  "name": "TJ3 Vault - TRON Multisig",
+  "short_name": "TJ3",
+  "description": "TRON Multisig Vault Lagos - PWA Ready",
+  "start_url": "/etk2456a-vault-verify/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#00ff88",
+  "icons": [
+    {"src": "icon-512.png","sizes": "512x512","type": "image/png","purpose": "any maskable"},
+    {"src": "icon-192.png","sizes": "192x192","type": "image/png"}
+  ]
+}
