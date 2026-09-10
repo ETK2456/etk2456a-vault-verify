@@ -1,27 +1,35 @@
-# 🟢 TJ3 Vault - Fixed ✅ - TRON Multisig Lagos - OFFLINE READY
+# 🟢 TJ3 Vault - LIVE ✅
+![LIVE](https://img.shields.io/badge/LIVE-TRON%20Mainnet-brightgreen)
+![PWA](https://img.shields.io/badge/PWA-Ready-blue)
+![Offline](https://img.shields.io/badge/Offline-Ready-green)
 
-**Live PWA:** https://etk2456.github.io/etk2456a-vault-verify/
-**APK:** 847 kB Offline Capable | **Status:** ✅ SW registered - offline capable - APK ready
+**Live Demo:** https://etk2456.github.io/etk2456a-vault-verify/
 
-### ✅ 9:34 PM Offline Test PASSED ✈️
-Screenshot shows Airplane Mode ON + Vault still loads:
-- TRX: 1248.53 TRX
-- USDT: 5341.06 USDT
-- Vault Status: SW registered - offline capable - APK ready
+Real TRON vault - LIVE balance when online, cached proof when offline ✈️
 
-### 💰 Vault
-- 3 Owners / 0/2 Multisig / TRON Mainnet
-- Lagos, Nigeria
+## 💰 Live Balance
+Vault: `TJ3UpJ9xyF9J4HMXWqp1nDZF5Nv4CwRg`
+- Fetches real TRX/USDT from Tronscan API
+- Offline fallback: 1248.53 TRX / 5341.06 USDT (cached)
 
-### 🔧 Fixed Tonight
-- Old: 404 badge, blob: error, 15-25 kB broken HTML
-- New: 1.48 kB clean HTML, real PNG icons, manifest.json + sw.js offline support
-- PWABuilder: 0 Errors - PWA Ready - Has Service Worker ✅ Offline ✅
+## ✨ Features
+- ✅ LIVE from TRON Mainnet
+- ✅ PWA offline ready (sw.js + manifest.json)
+- ✅ APK/AAB via PWABuilder.com - 0 errors
+- ✅ 3-Owner / 0/2 Multisig - Lagos, Nigeria
 
-### 📦 Files
-- index.html (1.48 kB)
-- manifest.json + sw.js (offline)
-- icon-192.png + icon-512.png
-- APK: TJ3.apk / AAB: TJ3.aab + signing.keystore KEEP!
+## 🚀 Quick Start (5 min)
+1. Fork this repo
+2. Edit `index.html` line 26: `const VAULT = "YOUR_TJ3_ADDRESS"`
+3. Settings → Pages → Enable → Your vault is LIVE!
 
-Built 2025 - ETK2456a
+## 📁 Files
+- `index.html` (1.48 KB) - Live vault
+- `manifest.json` + `sw.js` - Offline support
+- `icon-192.png` / `icon-512.png`
+- APK: `TJ3.apk` / AAB: `TJ3.aab` + `signing.keystore` KEEP!
+
+## 💵 Template for Sale
+Want your own vault? $15 → Gumroad (link coming)
+
+Built 2026 - ETK2456a
