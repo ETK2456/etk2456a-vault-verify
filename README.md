@@ -1,12 +1,11 @@
 # TJ3 Vault — Bybit-style TRON Vault PWA
-
 > Proves TRX/USDT balance **OFFLINE** for P2P merchants — airplane mode ready ✈️
 
 **🚀 Live Demo:** https://etk2456.github.io/etk2456a-vault-verify/?v=5  
 **🎥 Video Proof (30s):** https://x.com/ericxilla/status/2099628261475066161  
 **💰 Buy Source + APK Guide ($15):** https://regalomira.gumroad.com/l/tron-vault-pwa-live  
 
-![Vault](https://etk2456.github.io/etk2456a-vault-verify/preview.png)
+![Vault](https://raw.githubusercontent.com/ETK2456/etk2456a-vault-verify/main/icon-512.png)
 
 🟢 LIVE | TRON Mainnet | PWA Ready | Offline Ready
 
