@@ -2,9 +2,10 @@
 
 > Proves TRX/USDT balance **OFFLINE** for P2P merchants - airplane mode ready ✈️
 
-🚀 **Live Demo:** https://etk2456.github.io/etk2456a-vault-verify/?v=5
-🎥 **Video Proof (30s):** https://x.com/ericxilla/status/209962826147506161
-💰 **Buy Source + APK Guide ($15):** https://regalomira.gumroad.com/l/tron-vault-pwa-live
+- 🚀 **Live Demo:** https://etk2456.github.io/etk2456a-vault-verify/?v=5
+- 🎥 **Video Proof (30s):** https://x.com/ericxilla/status/209962826147506161
+- 💰 **Buy Source + APK Guide ($15):** https://regalomira.gumroad.com/l/tron-vault-pwa-live
+- 🏦 **Buy White-label $50 - Your Logo + APK in 24h:** https://regalomira.gumroad.com/l/tron-vault-white-label-50
 
 ![TJ3 Vault LIVE $5651 Proof](preview.png)
 
@@ -12,8 +13,8 @@
 
 Real TRON vault - LIVE balance when online, cached proof when offline ✈️
 
-### 💎 Live Balance
-Vault: `TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg`
+### 💰 Live Balance
+Vault: `TJ3UpJxJyF9J4MHIXngplnDZF5Nw4CWg`
 - Fetches real TRX/USDT from Tronscan API
 - Offline fallback: 1248.53 TRX / 5341.06 USDT (cached)
 
@@ -33,15 +34,15 @@ Vault: `TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg`
 - `index.html` (1.48 KB) - Live vault
 - `manifest.json` + `sw.js` - Offline support
 - `icon-192.png` / `icon-512.png`
-- APK: `TJ3.apk` / AAB: `TJ3.aab` + `signing.keystore` KEEP!
+- APK: `TJ3.apk` / AAB: `TJ3.aab` + `signing_keystore` KEEP!
 
-### 💵 Pricing
+### 💲 Pricing
 **Free:** Live Demo above
 
 **$15 - Source + APK Guide:** Full source + TronGrid hook + offline cache + timestamp
 → https://regalomira.gumroad.com/l/tron-vault-pwa-live
 
 **$50 - White-label:** Your logo + wallet + APK in 24h
-→ DM on X: @ericxilla
+→ https://regalomira.gumroad.com/l/tron-vault-white-label-50
 
-Built 2026 - ETK2456a | Lagos, Nigeria
+Built 2026 - ETK2456 | Lagos, Nigeria
