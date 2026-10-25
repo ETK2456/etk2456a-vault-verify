@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Vault - Send & Receive</title>
-<script src="https://cdn.jsdelivr.net/npm/tronweb@6.0.0/dist/TronWeb.js"></script>
+<title>TJ3 Vault - Send & Receive v7</title>
+<script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
 body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:480px;margin:auto}
 .card{background:#15151f;border-radius:16px;padding:16px;margin:12px 0}
-input{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;margin:8px 0}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;margin:8px 0;box-sizing:border-box}
 button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margin:6px 0;cursor:pointer}
 .yellow{background:#facc15;color:#000}
 .green{background:#22c55e;color:#000}
@@ -20,83 +20,82 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 <body>
 <h2>🔒 TJ3 Vault - Send & Receive</h2>
 <div class="small">Vault: TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg</div>
-
 <div class="card">
-<h3 id="total">$5,648.50 <span class="small">TOTAL</span></h3>
-<div>TRX: <b id="trx-bal">1,248.53</b> • USDT: <b id="usdt-bal">5,341.06</b></div>
+<h3 id="total">$5,648.50 TOTAL</h3>
+<div>TRX: <b id="trx-bal">1248.53</b> • USDT: <b id="usdt-bal">5341.06</b></div>
 <div class="small" id="sync">Last synced: <span id="sync-time">--</span> • <span id="online">● ONLINE</span></div>
 <button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button>
 </div>
-
 <div class="card">
 <h3>📥 Receive</h3>
 <img id="receive-qr" style="width:180px;background:#fff;padding:8px;border-radius:12px">
 <p id="addr" style="word-break:break-all;font-size:13px">TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg</p>
 <button class="green" onclick="copyAddr()">Copy Address</button>
 </div>
-
 <div class="card">
 <h3>📤 Send</h3>
-<label>Asset</label>
-<select id="asset" style="width:100%;padding:12px;background:#222;color:#fff;border-radius:10px">
-<option>TRX</option><option>USDT</option>
-</select>
+<select id="asset"><option>TRX</option><option>USDT</option></select>
 <input id="to-address" placeholder="To: TYi27..." value="">
-<input id="amount" type="number" placeholder="Amount: 1200" value="">
+<input id="amount" type="number" placeholder="Amount: 1" value="">
 <button class="gray" onclick="doMax()">MAX (balance - fee)</button>
-<div class="small">Fee reserve: <span id="fee">~13.5 TRX</span> • Network: TRON Mainnet</div>
+<div class="small">Fee reserve ~13.5 TRX • Network: TRON Mainnet</div>
 <input id="vault-pass" type="password" placeholder="Vault password to unlock">
 <button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button>
 <button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button>
+<div class="small" id="debug"></div>
 </div>
-
 <script>
 const VAULT = "TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg";
 const USDT_ADDR = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 document.getElementById('receive-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${VAULT}`;
 function copyAddr(){ navigator.clipboard.writeText(VAULT); alert("Copied!"); }
-
 async function fetchBalance(){
   try{
     const r = await fetch(`https://apilist.tronscanapi.com/api/account?address=${VAULT}`);
     const d = await r.json();
     const trx = d.balance/1e6;
     let usdt = 0;
-    if(d.tokenBalances) { let f = d.tokenBalances.find(t=>t.tokenId===USDT_ADDR); if(f) usdt = f.balance/1e6; }
+    if(d.tokenBalances){ let f=d.tokenBalances.find(t=>t.tokenId===USDT_ADDR); if(f) usdt=f.balance/1e6; }
     document.getElementById('trx-bal').textContent = trx.toFixed(2);
     document.getElementById('usdt-bal').textContent = usdt.toFixed(2);
-    document.getElementById('total').textContent = "$"+(trx*0.24 + usdt).toFixed(2);
+    document.getElementById('total').textContent = "$"+(trx*0.24+usdt).toFixed(2)+" TOTAL";
     document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
     localStorage.setItem('vault_cache', JSON.stringify({trx,usdt,time:Date.now()}));
-  } catch(e){
-    let c = JSON.parse(localStorage.getItem('vault_cache')||'{}');
-    if(c.trx){ document.getElementById('trx-bal').textContent=c.trx.toFixed(2); document.getElementById('usdt-bal').textContent=c.usdt.toFixed(2); document.getElementById('online').textContent="● OFFLINE PROOF (cached)"; }
+  }catch(e){
+    document.getElementById('debug').textContent = "Offline: showing cached";
   }
 }
 fetchBalance();
-
 function doMax(){
-  const bal = parseFloat(document.getElementById(document.getElementById('asset').value==='TRX'?'trx-bal':'usdt-bal').textContent.replace(',',''));
-  const reserve = document.getElementById('asset').value==='TRX'?13.5:1.5;
-  document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2);
+  try{
+    const asset = document.getElementById('asset').value;
+    const balText = document.getElementById(asset==='TRX'?'trx-bal':'usdt-bal').textContent;
+    const bal = parseFloat(balText);
+    const reserve = asset==='TRX'?13.5:1.5;
+    document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2);
+  }catch(e){ alert("MAX error: "+e.message); }
 }
 function setupWallet(){
-  const pk = prompt("Enter your PRIVATE KEY (only once, never share):");
+  alert("Setup pressed");
+  const pk = prompt("Enter your PRIVATE KEY (only once):");
   if(!pk) return;
   const pw = prompt("Set vault PASSWORD:");
+  if(!pw) return;
   const enc = CryptoJS.AES.encrypt(pk, pw).toString();
   localStorage.setItem('vault_enc', enc);
-  alert("Vault locked! Encrypted saved.");
+  alert("✅ Vault locked! Now you can Send.");
 }
 async function realSend(){
+  alert("Button pressed! Checking...");
   const to = document.getElementById('to-address').value.trim();
   const amt = parseFloat(document.getElementById('amount').value);
   const asset = document.getElementById('asset').value;
   const pw = document.getElementById('vault-pass').value;
-  if(!to.startsWith('T')) return alert("Invalid To address");
+  if(!to || !to.startsWith('T')) return alert("Invalid To address");
   if(!amt) return alert("Enter amount");
   const enc = localStorage.getItem('vault_enc');
-  if(!enc) return alert("Tap Setup first");
+  if(!enc) return alert("Tap Setup / Lock Vault FIRST!");
+  if(!window.TronWeb) return alert("TronWeb not loaded - check network");
   const pk = CryptoJS.AES.decrypt(enc, pw).toString(CryptoJS.enc.Utf8);
   if(!pk) return alert("Wrong password");
   const tronWeb = new TronWeb({fullHost:'https://api.trongrid.io', privateKey: pk});
