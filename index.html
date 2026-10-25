@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Vault v12 - Real Address</title>
+<title>TJ3 Vault v13</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
 <script>window.Buffer = buffer.Buffer;</script>
 <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
@@ -14,7 +14,7 @@ body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:
 input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;margin:8px 0;box-sizing:border-box}
 button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margin:6px 0;cursor:pointer}
 .yellow{background:#facc15;color:#000}.green{background:#22c55e;color:#000}.gray{background:#333;color:#fff}
-.small{font-size:12px;color:#aaa}.tx{border-bottom:1px solid #333;padding:10px 0;font-size:13px}.out{color:#f87171}.in{color:#22c55e}
+.small{font-size:12px;color:#aaa}.tx{border-bottom:1px solid #333;padding:10px 0;font-size:13px}.out{color:#f87171}
 .tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1;padding:10px}.active-tab{background:#facc15!important;color:#000!important}
 </style>
 </head>
@@ -23,9 +23,9 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 <div class="small">Vault: TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg</div>
 <div class="tabs"><button id="tab-balance" class="gray active-tab" onclick="showTab('balance')">💰 Balance</button><button id="tab-history" class="gray" onclick="showTab('history')">📜 History</button></div>
 <div id="view-balance">
-<div class="card"><h3 id="total">Loading...</h3><div>TRX: <b id="trx-bal">--</b> • USDT: <b id="usdt-bal">--</b></div><div class="small">Last synced: <span id="sync-time">--</span> • <span id="online">● ONLINE</span></div><button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button><div class="small" id="bal-error"></div></div>
+<div class="card"><h3 id="total">Loading...</h3><div>TRX: <b id="trx-bal">--</b> • USDT: <b id="usdt-bal">--</b></div><div class="small">Last synced: <span id="sync-time">--</span></div><button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button><div class="small" id="bal-error"></div></div>
 <div class="card"><h3>📥 Receive</h3><img id="receive-qr" style="width:180px;background:#fff;padding:8px;border-radius:12px"><p style="word-break:break-all;font-size:13px">TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg</p><button class="green" onclick="copyAddr()">Copy Address</button></div>
-<div class="card"><h3>📤 Send</h3><select id="asset"><option>TRX</option><option>USDT</option></select><input id="to-address" placeholder="To: Paste 【entity-Bybit¦canonical_name=Bybit】 address" value=""><input id="amount" type="number" placeholder="Amount: 1" value=""><button class="gray" onclick="doMax()">MAX (balance - fee)</button><div class="small">Fee reserve ~13.5 TRX • Always Copy/Paste address!</div><input id="vault-pass" type="password" placeholder="Vault password to unlock"><button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button></div>
+<div class="card"><h3>📤 Send</h3><select id="asset"><option>TRX</option><option>USDT</option></select><input id="to-address" placeholder="To: Paste Bybit address" value=""><input id="amount" type="number" placeholder="Amount: 1" value=""><button class="gray" onclick="doMax()">MAX (balance - fee)</button><div class="small">Fee reserve ~13.5 TRX</div><input id="vault-pass" type="password" placeholder="Vault password to unlock"><button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button></div>
 </div>
 <div id="view-history" style="display:none"><div class="card"><h3>📜 History</h3><button class="gray" onclick="fetchHistory()">↻ Refresh History</button><div id="history-list"></div></div></div>
 <script>
@@ -39,29 +39,35 @@ async function fetchBalance(){
   try{
     const r = await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}`);
     const d = await r.json();
-    if(!d.data || !d.data.length) throw new Error("No account - check address");
+    if(!d.data || !d.data.length) throw new Error("No account on TronGrid");
     const acc = d.data[0];
-    const trx = acc.balance/1e6;
+    // FIX: balance may be missing = 0, not NaN
+    const trx = (acc.balance || 0) / 1e6;
     let usdt = 0;
-    if(acc.trc20){ let u = acc.trc20.find(t=>t[USDT_ADDR]); if(u) usdt = u/1e6; }
+    // trc20 can be array or object
+    if(acc.trc20){
+      if(Array.isArray(acc.trc20)){ let f = acc.trc20.find(t=>t[USDT_ADDR]); if(f) usdt = f[USDT_ADDR]/1e6; }
+      else if(acc.trc20[USDT_ADDR]) usdt = acc.trc20[USDT_ADDR]/1e6;
+    }
     document.getElementById('trx-bal').textContent = trx.toFixed(2);
     document.getElementById('usdt-bal').textContent = usdt.toFixed(2);
     document.getElementById('total').textContent = "$"+(trx*0.3288+usdt).toFixed(2)+" TOTAL";
     document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
-    document.getElementById('bal-error').textContent = "✅ Synced - Real On-Chain Balance";
-  }catch(e){ document.getElementById('bal-error').textContent = "❌ Sync failed: "+e.message; }
+    document.getElementById('bal-error').textContent = "✅ Synced - Real: "+trx.toFixed(2)+" TRX, "+usdt.toFixed(2)+" USDT";
+    if(trx===0 && usdt===0) document.getElementById('bal-error').textContent += " — Account exists but EMPTY on-chain. Your 1248 TRX / 5341 USDT are NOT in this address! Check TronLink - is this the right wallet?";
+  }catch(e){ document.getElementById('bal-error').textContent = "❌ "+e.message; }
 }
 fetchBalance();
-function doMax(){ const asset = document.getElementById('asset').value; const bal = parseFloat(document.getElementById(asset==='TRX'?'trx-bal':'usdt-bal').textContent); if(isNaN(bal)) return alert("Refresh Balance first"); const reserve = asset==='TRX'?13.5:1.5; document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2); }
-function setupWallet(){ const pk = prompt("Enter PRIVATE KEY for TJ3uPj9... (must match this address!):"); if(!pk) return; const pw = prompt("Set vault PASSWORD:"); if(!pw) return; const enc = CryptoJS.AES.encrypt(pk, pw).toString(); localStorage.setItem('vault_enc', enc); alert("✅ Vault locked!"); }
+function doMax(){ const asset = document.getElementById('asset').value; const bal = parseFloat(document.getElementById(asset==='TRX'?'trx-bal':'usdt-bal').textContent); if(isNaN(bal)) return alert("Refresh first"); const reserve = asset==='TRX'?13.5:1.5; document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2); }
+function setupWallet(){ const pk = prompt("Enter PRIVATE KEY for TJ3uPj9...:"); if(!pk) return; const pw = prompt("Set vault PASSWORD:"); if(!pw) return; const enc = CryptoJS.AES.encrypt(pk, pw).toString(); localStorage.setItem('vault_enc', enc); alert("✅ Vault locked!"); }
 async function realSend(){
   const to = document.getElementById('to-address').value.trim(); const amt = parseFloat(document.getElementById('amount').value); const asset = document.getElementById('asset').value; const pw = document.getElementById('vault-pass').value;
-  if(!to || !to.startsWith('T')) return alert("Invalid To address - Copy from Bybit!"); if(!amt) return alert("Enter amount");
+  if(!to || !to.startsWith('T')) return alert("Invalid To"); if(!amt) return alert("Enter amount");
   const enc = localStorage.getItem('vault_enc'); if(!enc) return alert("Tap Setup FIRST!");
   const pk = CryptoJS.AES.decrypt(enc, pw).toString(CryptoJS.enc.Utf8); if(!pk) return alert("Wrong password");
   const tronWeb = new TronWeb({fullHost:'https://api.trongrid.io', privateKey: pk});
   const derived = tronWeb.address.fromPrivateKey(pk);
-  if(derived !== VAULT) return alert("❌ WRONG KEY! This key is for "+derived+" not "+VAULT);
+  if(derived !== VAULT) return alert("❌ WRONG KEY! For "+derived);
   try{ let tx; if(asset==='TRX'){ tx = await tronWeb.trx.sendTransaction(to, tronWeb.toSun(amt)); } else { const c = await tronWeb.contract().at(USDT_ADDR); tx = await c.transfer(to, Math.floor(amt*1e6)).send({feeLimit:10000000}); }
   let hist = JSON.parse(localStorage.getItem('vault_tx_history')||'[]'); hist.unshift({txid: tx.txid, to: to, amount: amt, asset: asset, time: Date.now()}); localStorage.setItem('vault_tx_history', JSON.stringify(hist.slice(0,20)));
   alert("✅ SENT! TxID: "+tx.txid); navigator.clipboard.writeText(tx.txid); fetchBalance(); }catch(e){ alert("Failed: "+e.message); }
@@ -69,7 +75,7 @@ async function realSend(){
 async function fetchHistory(){
   const list = document.getElementById('history-list'); let html = "";
   let local = JSON.parse(localStorage.getItem('vault_tx_history')||'[]');
-  if(local.length){ html += "<h4>📱 This App</h4>"; local.forEach(h=>{ html += `<div class="tx"><span class="out">⬆ OUT ${h.amount} ${h.asset}</span><br>To: ${h.to}<br><span class="small">${h.txid}</span><br><span class="small">${new Date(h.time).toLocaleString()}</span></div>`; }); } else html += "<p class='small'>No local sends yet</p>";
+  if(local.length){ html += "<h4>📱 This App</h4>"; local.forEach(h=>{ html += `<div class="tx"><span class="out">⬆ OUT ${h.amount} ${h.asset}</span><br>To: ${h.to}<br><span class="small">${h.txid}</span></div>`; }); } else html += "<p class='small'>No local sends yet</p>";
   try{ const r = await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}/transactions?limit=20`); const d = await r.json(); html += "<h4>⛓️ On-Chain</h4>"; if(d.data && d.data.length){ d.data.forEach(t=>{ html += `<div class="tx"><span class="small">${t.txID}</span><br><a href="https://tronscan.org/#/transaction/${t.txID}" style="color:#60a5fa">View ↗</a></div>`; }); } else html += "<p class='small'>No on-chain yet</p>"; }catch(e){ html += "<p class='small'>On-chain error</p>"; }
   list.innerHTML = html;
 }
