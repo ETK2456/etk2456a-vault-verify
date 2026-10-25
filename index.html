@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Vault - Send & Receive v7</title>
+<title>TJ3 Vault - Send & Receive v8</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
+<script>window.Buffer = buffer.Buffer;</script>
 <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
@@ -29,7 +31,7 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 <div class="card">
 <h3>📥 Receive</h3>
 <img id="receive-qr" style="width:180px;background:#fff;padding:8px;border-radius:12px">
-<p id="addr" style="word-break:break-all;font-size:13px">TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg</p>
+<p style="word-break:break-all;font-size:13px">TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg</p>
 <button class="green" onclick="copyAddr()">Copy Address</button>
 </div>
 <div class="card">
@@ -38,7 +40,7 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 <input id="to-address" placeholder="To: TYi27..." value="">
 <input id="amount" type="number" placeholder="Amount: 1" value="">
 <button class="gray" onclick="doMax()">MAX (balance - fee)</button>
-<div class="small">Fee reserve ~13.5 TRX • Network: TRON Mainnet</div>
+<div class="small">Fee reserve ~13.5 TRX • TRON Mainnet</div>
 <input id="vault-pass" type="password" placeholder="Vault password to unlock">
 <button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button>
 <button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button>
@@ -61,32 +63,25 @@ async function fetchBalance(){
     document.getElementById('total').textContent = "$"+(trx*0.24+usdt).toFixed(2)+" TOTAL";
     document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
     localStorage.setItem('vault_cache', JSON.stringify({trx,usdt,time:Date.now()}));
-  }catch(e){
-    document.getElementById('debug').textContent = "Offline: showing cached";
-  }
+  }catch(e){}
 }
 fetchBalance();
 function doMax(){
-  try{
-    const asset = document.getElementById('asset').value;
-    const balText = document.getElementById(asset==='TRX'?'trx-bal':'usdt-bal').textContent;
-    const bal = parseFloat(balText);
-    const reserve = asset==='TRX'?13.5:1.5;
-    document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2);
-  }catch(e){ alert("MAX error: "+e.message); }
+  const asset = document.getElementById('asset').value;
+  const bal = parseFloat(document.getElementById(asset==='TRX'?'trx-bal':'usdt-bal').textContent);
+  const reserve = asset==='TRX'?13.5:1.5;
+  document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2);
 }
 function setupWallet(){
-  alert("Setup pressed");
-  const pk = prompt("Enter your PRIVATE KEY (only once):");
+  const pk = prompt("Enter your PRIVATE KEY:");
   if(!pk) return;
   const pw = prompt("Set vault PASSWORD:");
   if(!pw) return;
   const enc = CryptoJS.AES.encrypt(pk, pw).toString();
   localStorage.setItem('vault_enc', enc);
-  alert("✅ Vault locked! Now you can Send.");
+  alert("✅ Vault locked!");
 }
 async function realSend(){
-  alert("Button pressed! Checking...");
   const to = document.getElementById('to-address').value.trim();
   const amt = parseFloat(document.getElementById('amount').value);
   const asset = document.getElementById('asset').value;
@@ -94,8 +89,7 @@ async function realSend(){
   if(!to || !to.startsWith('T')) return alert("Invalid To address");
   if(!amt) return alert("Enter amount");
   const enc = localStorage.getItem('vault_enc');
-  if(!enc) return alert("Tap Setup / Lock Vault FIRST!");
-  if(!window.TronWeb) return alert("TronWeb not loaded - check network");
+  if(!enc) return alert("Tap Setup FIRST!");
   const pk = CryptoJS.AES.decrypt(enc, pw).toString(CryptoJS.enc.Utf8);
   if(!pk) return alert("Wrong password");
   const tronWeb = new TronWeb({fullHost:'https://api.trongrid.io', privateKey: pk});
