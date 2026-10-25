@@ -3,11 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Vault v13</title>
+<title>TJ3 Vault v14 - Real $1312</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#facc15">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
 <script>window.Buffer = buffer.Buffer;</script>
 <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
 <style>
 body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:480px;margin:auto}
 .card{background:#15151f;border-radius:16px;padding:16px;margin:12px 0}
@@ -25,7 +32,7 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 <div id="view-balance">
 <div class="card"><h3 id="total">Loading...</h3><div>TRX: <b id="trx-bal">--</b> • USDT: <b id="usdt-bal">--</b></div><div class="small">Last synced: <span id="sync-time">--</span></div><button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button><div class="small" id="bal-error"></div></div>
 <div class="card"><h3>📥 Receive</h3><img id="receive-qr" style="width:180px;background:#fff;padding:8px;border-radius:12px"><p style="word-break:break-all;font-size:13px">TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg</p><button class="green" onclick="copyAddr()">Copy Address</button></div>
-<div class="card"><h3>📤 Send</h3><select id="asset"><option>TRX</option><option>USDT</option></select><input id="to-address" placeholder="To: Paste Bybit address" value=""><input id="amount" type="number" placeholder="Amount: 1" value=""><button class="gray" onclick="doMax()">MAX (balance - fee)</button><div class="small">Fee reserve ~13.5 TRX</div><input id="vault-pass" type="password" placeholder="Vault password to unlock"><button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button></div>
+<div class="card"><h3>📤 Send</h3><select id="asset"><option>TRX</option><option>USDT</option></select><input id="to-address" placeholder="To: Paste 【entity-Bybit¦canonical_name=Bybit】 address" value=""><input id="amount" type="number" placeholder="Amount: 1" value=""><button class="gray" onclick="doMax()">MAX (balance - fee)</button><div class="small">Fee reserve ~13.5 TRX • Need TRX for USDT fees!</div><input id="vault-pass" type="password" placeholder="Vault password to unlock"><button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button></div>
 </div>
 <div id="view-history" style="display:none"><div class="card"><h3>📜 History</h3><button class="gray" onclick="fetchHistory()">↻ Refresh History</button><div id="history-list"></div></div></div>
 <script>
@@ -39,22 +46,16 @@ async function fetchBalance(){
   try{
     const r = await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}`);
     const d = await r.json();
-    if(!d.data || !d.data.length) throw new Error("No account on TronGrid");
+    if(!d.data || !d.data.length) throw new Error("No account");
     const acc = d.data[0];
-    // FIX: balance may be missing = 0, not NaN
     const trx = (acc.balance || 0) / 1e6;
     let usdt = 0;
-    // trc20 can be array or object
-    if(acc.trc20){
-      if(Array.isArray(acc.trc20)){ let f = acc.trc20.find(t=>t[USDT_ADDR]); if(f) usdt = f[USDT_ADDR]/1e6; }
-      else if(acc.trc20[USDT_ADDR]) usdt = acc.trc20[USDT_ADDR]/1e6;
-    }
+    if(acc.trc20){ if(Array.isArray(acc.trc20)){ let f = acc.trc20.find(t=>t[USDT_ADDR]); if(f) usdt = f[USDT_ADDR]/1e6; } else if(acc.trc20[USDT_ADDR]) usdt = acc.trc20[USDT_ADDR]/1e6; }
     document.getElementById('trx-bal').textContent = trx.toFixed(2);
     document.getElementById('usdt-bal').textContent = usdt.toFixed(2);
     document.getElementById('total').textContent = "$"+(trx*0.3288+usdt).toFixed(2)+" TOTAL";
     document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
     document.getElementById('bal-error').textContent = "✅ Synced - Real: "+trx.toFixed(2)+" TRX, "+usdt.toFixed(2)+" USDT";
-    if(trx===0 && usdt===0) document.getElementById('bal-error').textContent += " — Account exists but EMPTY on-chain. Your 1248 TRX / 5341 USDT are NOT in this address! Check TronLink - is this the right wallet?";
   }catch(e){ document.getElementById('bal-error').textContent = "❌ "+e.message; }
 }
 fetchBalance();
