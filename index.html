@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Vault - Send & Receive v8</title>
+<title>TJ3 Vault - Send & Receive v9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
 <script>window.Buffer = buffer.Buffer;</script>
 <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
@@ -17,15 +17,29 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 .green{background:#22c55e;color:#000}
 .gray{background:#333;color:#fff}
 .small{font-size:12px;color:#aaa}
+.tx{border-bottom:1px solid #333;padding:10px 0;font-size:13px}
+.tx b{color:#fff}
+.out{color:#f87171}
+.in{color:#22c55e}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tabs button{flex:1;padding:10px}
+.active-tab{background:#facc15!important;color:#000!important}
 </style>
 </head>
 <body>
 <h2>🔒 TJ3 Vault - Send & Receive</h2>
 <div class="small">Vault: TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg</div>
+
+<div class="tabs">
+<button id="tab-balance" class="gray active-tab" onclick="showTab('balance')">💰 Balance</button>
+<button id="tab-history" class="gray" onclick="showTab('history')">📜 History</button>
+</div>
+
+<div id="view-balance">
 <div class="card">
 <h3 id="total">$5,648.50 TOTAL</h3>
 <div>TRX: <b id="trx-bal">1248.53</b> • USDT: <b id="usdt-bal">5341.06</b></div>
-<div class="small" id="sync">Last synced: <span id="sync-time">--</span> • <span id="online">● ONLINE</span></div>
+<div class="small">Last synced: <span id="sync-time">--</span> • <span id="online">● ONLINE</span></div>
 <button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button>
 </div>
 <div class="card">
@@ -46,10 +60,28 @@ button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margi
 <button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button>
 <div class="small" id="debug"></div>
 </div>
+</div>
+
+<div id="view-history" style="display:none">
+<div class="card">
+<h3>📜 Transaction History</h3>
+<div class="small">Real on-chain from Tronscan • Tap Tx to open</div>
+<button class="gray" onclick="fetchHistory()">↻ Refresh History</button>
+<div id="history-list"><p class="small">Loading...</p></div>
+</div>
+</div>
+
 <script>
 const VAULT = "TJ3UpJ9xyF9J4HMIXwgp1nDZF5Nv4CwRg";
 const USDT_ADDR = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 document.getElementById('receive-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${VAULT}`;
+function showTab(t){
+  document.getElementById('view-balance').style.display = t==='balance'?'block':'none';
+  document.getElementById('view-history').style.display = t==='history'?'block':'none';
+  document.getElementById('tab-balance').className = t==='balance'?'gray active-tab':'gray';
+  document.getElementById('tab-history').className = t==='history'?'gray active-tab':'gray';
+  if(t==='history') fetchHistory();
+}
 function copyAddr(){ navigator.clipboard.writeText(VAULT); alert("Copied!"); }
 async function fetchBalance(){
   try{
@@ -97,9 +129,41 @@ async function realSend(){
     let tx;
     if(asset==='TRX'){ tx = await tronWeb.trx.sendTransaction(to, tronWeb.toSun(amt)); }
     else { const c = await tronWeb.contract().at(USDT_ADDR); tx = await c.transfer(to, Math.floor(amt*1e6)).send({feeLimit:10000000}); }
-    alert("✅ SENT! TxID: "+tx.txid);
-    fetchBalance();
+    // Save full txid locally - fixes 404 truncation
+    let hist = JSON.parse(localStorage.getItem('vault_tx_history')||'[]');
+    hist.unshift({txid: tx.txid, to: to, amount: amt, asset: asset, time: Date.now()});
+    localStorage.setItem('vault_tx_history', JSON.stringify(hist.slice(0,20)));
+    alert("✅ SENT! Full TxID copied:\n"+tx.txid);
+    navigator.clipboard.writeText(tx.txid);
+    fetchBalance(); fetchHistory();
   }catch(e){ alert("Failed: "+e.message); }
+}
+async function fetchHistory(){
+  const list = document.getElementById('history-list');
+  list.innerHTML = "<p class='small'>Loading...</p>";
+  try{
+    // 1. Local history (full TxID)
+    let local = JSON.parse(localStorage.getItem('vault_tx_history')||'[]');
+    let html = "";
+    if(local.length){
+      html += "<h4>📱 This App</h4>";
+      local.forEach(h=>{
+        html += `<div class="tx"><span class="out">⬆ OUT ${h.amount} ${h.asset}</span><br>To: ${h.to.slice(0,10)}...${h.to.slice(-6)}<br><span class="small" onclick="navigator.clipboard.writeText('${h.txid}');alert('Copied TxID')">${h.txid.slice(0,20)}... tap to copy full</span><br><span class="small">${new Date(h.time).toLocaleString()}</span></div>`;
+      });
+    }
+    // 2. On-chain from Tronscan
+    const r = await fetch(`https://apilist.tronscanapi.com/api/transfer?address=${VAULT}&limit=20`);
+    const d = await r.json();
+    html += "<h4>⛓️ On-Chain (Tronscan)</h4>";
+    if(d.data && d.data.length){
+      d.data.forEach(t=>{
+        const isOut = t.fromAddress === VAULT;
+        const amt = (t.amount / (t.tokenName==='TRX'?1e6:1e6)).toFixed(2);
+        html += `<div class="tx"><span class="${isOut?'out':'in'}">${isOut?'⬆ OUT':'⬇ IN'} ${amt} ${t.tokenName}</span><br>${isOut?'To':'From'}: ${(isOut?t.toAddress:t.fromAddress).slice(0,10)}...<br><a href="https://tronscan.org/#/transaction/${t.transactionHash}" target="_blank" style="color:#60a5fa">View on Tronscan ↗</a><br><span class="small">${new Date(t.timestamp).toLocaleString()}</span></div>`;
+      });
+    } else { html += "<p class='small'>No on-chain transfers yet</p>"; }
+    list.innerHTML = html;
+  }catch(e){ list.innerHTML = "<p class='small'>Failed to load history - check network</p>"; }
 }
 </script>
 </body>
