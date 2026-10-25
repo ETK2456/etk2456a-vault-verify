@@ -1,85 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Vault v14 - Real $1312</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TJ3 Autoswap Vault v15</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#facc15">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
 <script>window.Buffer = buffer.Buffer;</script>
 <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-<script>
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
-</script>
 <style>
-body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:480px;margin:auto}
+body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:560px;margin:auto}
 .card{background:#15151f;border-radius:16px;padding:16px;margin:12px 0}
-input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;margin:8px 0;box-sizing:border-box}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;margin:8px 0;box-sizing:border-box}
 button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margin:6px 0;cursor:pointer}
 .yellow{background:#facc15;color:#000}.green{background:#22c55e;color:#000}.gray{background:#333;color:#fff}
-.small{font-size:12px;color:#aaa}.tx{border-bottom:1px solid #333;padding:10px 0;font-size:13px}.out{color:#f87171}
-.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1;padding:10px}.active-tab{background:#facc15!important;color:#000!important}
+.small{font-size:12px;color:#aaa}.row{border-bottom:1px solid #333;padding:10px 0;font-size:13px}
 </style>
 </head>
 <body>
-<h2>🔒 TJ3 Vault - Send & Receive</h2>
-<div class="small">Vault: TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg</div>
-<div class="tabs"><button id="tab-balance" class="gray active-tab" onclick="showTab('balance')">💰 Balance</button><button id="tab-history" class="gray" onclick="showTab('history')">📜 History</button></div>
-<div id="view-balance">
-<div class="card"><h3 id="total">Loading...</h3><div>TRX: <b id="trx-bal">--</b> • USDT: <b id="usdt-bal">--</b></div><div class="small">Last synced: <span id="sync-time">--</span></div><button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button><div class="small" id="bal-error"></div></div>
-<div class="card"><h3>📥 Receive</h3><img id="receive-qr" style="width:180px;background:#fff;padding:8px;border-radius:12px"><p style="word-break:break-all;font-size:13px">TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg</p><button class="green" onclick="copyAddr()">Copy Address</button></div>
-<div class="card"><h3>📤 Send</h3><select id="asset"><option>TRX</option><option>USDT</option></select><input id="to-address" placeholder="To: Paste 【entity-Bybit¦canonical_name=Bybit】 address" value=""><input id="amount" type="number" placeholder="Amount: 1" value=""><button class="gray" onclick="doMax()">MAX (balance - fee)</button><div class="small">Fee reserve ~13.5 TRX • Need TRX for USDT fees!</div><input id="vault-pass" type="password" placeholder="Vault password to unlock"><button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault (first time)</button></div>
-</div>
-<div id="view-history" style="display:none"><div class="card"><h3>📜 History</h3><button class="gray" onclick="fetchHistory()">↻ Refresh History</button><div id="history-list"></div></div></div>
+<h2>🔒 TJ3 Autoswap Bot Vault - V15</h2>
+<div class="small">TJ3: TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg</div>
+<button class="yellow" onclick="syncAll()">🔄 SYNC ALL 5 WALLETS</button>
+<div class="small" id="sync-status">Tap SYNC ALL</div>
+<div id="wallets"></div>
+<div class="card"><h3>🔐 Permissions - TJ3 Multisig</h3><p class="small">Owner: TC4ugDg9KE1KGDZ5Su7aaKh8FujeYj486Z threshold 1 - controls owner<br>Active: TJ3 + TC4 threshold 2 - needs both to move funds<br><b>isMultisig: true - 2-of-2</b></p></div>
+<div class="card"><h3>🔑 Key Checker</h3><input id="priv" type="password" placeholder="Paste private key"><button class="gray" onclick="cleanKey()">CLEAN KEY</button><button class="green" onclick="computeOwner()">COMPUTE OWNER</button><div class="small" id="key-result"></div></div>
+<div class="card"><h3>📤 Send from TJ3</h3><select id="asset" style="width:100%;padding:12px;background:#222;color:#fff;border-radius:10px"><option>TRX</option><option>USDT</option></select><input id="to-address" placeholder="To: Paste Bybit address"><input id="amount" type="number" placeholder="Amount"><input id="vault-pass" type="password" placeholder="Vault password"><button class="yellow" onclick="realSend()">Send Now</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault</button></div>
 <script>
-const VAULT = "TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg";
-const USDT_ADDR = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-document.getElementById('receive-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${VAULT}`;
-function showTab(t){ document.getElementById('view-balance').style.display = t==='balance'?'block':'none'; document.getElementById('view-history').style.display = t==='history'?'block':'none'; document.getElementById('tab-balance').className = t==='balance'?'gray active-tab':'gray'; document.getElementById('tab-history').className = t==='history'?'gray active-tab':'gray'; if(t==='history') fetchHistory(); }
-function copyAddr(){ navigator.clipboard.writeText(VAULT); alert("Copied!"); }
-async function fetchBalance(){
-  document.getElementById('bal-error').textContent = "Syncing via TronGrid...";
-  try{
-    const r = await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}`);
-    const d = await r.json();
-    if(!d.data || !d.data.length) throw new Error("No account");
-    const acc = d.data[0];
-    const trx = (acc.balance || 0) / 1e6;
-    let usdt = 0;
-    if(acc.trc20){ if(Array.isArray(acc.trc20)){ let f = acc.trc20.find(t=>t[USDT_ADDR]); if(f) usdt = f[USDT_ADDR]/1e6; } else if(acc.trc20[USDT_ADDR]) usdt = acc.trc20[USDT_ADDR]/1e6; }
-    document.getElementById('trx-bal').textContent = trx.toFixed(2);
-    document.getElementById('usdt-bal').textContent = usdt.toFixed(2);
-    document.getElementById('total').textContent = "$"+(trx*0.3288+usdt).toFixed(2)+" TOTAL";
-    document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
-    document.getElementById('bal-error').textContent = "✅ Synced - Real: "+trx.toFixed(2)+" TRX, "+usdt.toFixed(2)+" USDT";
-  }catch(e){ document.getElementById('bal-error').textContent = "❌ "+e.message; }
+const VAULT="TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg";
+const USDT_ADDR="TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+const WALLETS=[
+{name:"TJ3 TARGET",addr:"TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg"},
+{name:"TC4 OWNER",addr:"TC4ugDg9KE1KGDZ5Su7aaKh8FujeYj486Z"},
+{name:"TEXJ SAFE",addr:"TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz"},
+{name:"BYBIT",addr:"TYi27YZoGnA8QNFuvXtuL2tpGJoLvnriDz"},
+{name:"TBvQ FUNDING",addr:"TBvQNF5a8CtUY29EW1cA6ZofEEaD5vi6uP"}
+];
+async function syncAll(){
+  document.getElementById('sync-status').textContent="Syncing via TronGrid...";
+  let html="";
+  for(let w of WALLETS){
+    try{
+      const r=await fetch(`https://api.trongrid.io/v1/accounts/${w.addr}`);
+      const d=await r.json();
+      let trx=0, usdt=0;
+      if(d.data && d.data.length){ const acc=d.data[0]; trx=(acc.balance||0)/1e6; if(acc.trc20){ if(Array.isArray(acc.trc20)){ let f=acc.trc20.find(t=>t[USDT_ADDR]); if(f) usdt=f[USDT_ADDR]/1e6; } else if(acc.trc20[USDT_ADDR]) usdt=acc.trc20[USDT_ADDR]/1e6; } }
+      html+=`<div class="card"><b>${w.name}</b><br><span class="small">${w.addr}</span><br>TRX: ${trx.toFixed(2)} • USDT: ${usdt.toFixed(2)}<br><a href="https://tronscan.org/#/address/${w.addr}" style="color:#60a5fa">Tronscan ↗</a></div>`;
+    }catch(e){ html+=`<div class="card"><b>${w.name}</b><br><span class="small">${w.addr} - Failed</span></div>`; }
+  }
+  document.getElementById('wallets').innerHTML=html;
+  document.getElementById('sync-status').textContent="✅ Synced "+new Date().toLocaleTimeString();
 }
-fetchBalance();
-function doMax(){ const asset = document.getElementById('asset').value; const bal = parseFloat(document.getElementById(asset==='TRX'?'trx-bal':'usdt-bal').textContent); if(isNaN(bal)) return alert("Refresh first"); const reserve = asset==='TRX'?13.5:1.5; document.getElementById('amount').value = Math.max(0, bal - reserve).toFixed(2); }
-function setupWallet(){ const pk = prompt("Enter PRIVATE KEY for TJ3uPj9...:"); if(!pk) return; const pw = prompt("Set vault PASSWORD:"); if(!pw) return; const enc = CryptoJS.AES.encrypt(pk, pw).toString(); localStorage.setItem('vault_enc', enc); alert("✅ Vault locked!"); }
-async function realSend(){
-  const to = document.getElementById('to-address').value.trim(); const amt = parseFloat(document.getElementById('amount').value); const asset = document.getElementById('asset').value; const pw = document.getElementById('vault-pass').value;
-  if(!to || !to.startsWith('T')) return alert("Invalid To"); if(!amt) return alert("Enter amount");
-  const enc = localStorage.getItem('vault_enc'); if(!enc) return alert("Tap Setup FIRST!");
-  const pk = CryptoJS.AES.decrypt(enc, pw).toString(CryptoJS.enc.Utf8); if(!pk) return alert("Wrong password");
-  const tronWeb = new TronWeb({fullHost:'https://api.trongrid.io', privateKey: pk});
-  const derived = tronWeb.address.fromPrivateKey(pk);
-  if(derived !== VAULT) return alert("❌ WRONG KEY! For "+derived);
-  try{ let tx; if(asset==='TRX'){ tx = await tronWeb.trx.sendTransaction(to, tronWeb.toSun(amt)); } else { const c = await tronWeb.contract().at(USDT_ADDR); tx = await c.transfer(to, Math.floor(amt*1e6)).send({feeLimit:10000000}); }
-  let hist = JSON.parse(localStorage.getItem('vault_tx_history')||'[]'); hist.unshift({txid: tx.txid, to: to, amount: amt, asset: asset, time: Date.now()}); localStorage.setItem('vault_tx_history', JSON.stringify(hist.slice(0,20)));
-  alert("✅ SENT! TxID: "+tx.txid); navigator.clipboard.writeText(tx.txid); fetchBalance(); }catch(e){ alert("Failed: "+e.message); }
-}
-async function fetchHistory(){
-  const list = document.getElementById('history-list'); let html = "";
-  let local = JSON.parse(localStorage.getItem('vault_tx_history')||'[]');
-  if(local.length){ html += "<h4>📱 This App</h4>"; local.forEach(h=>{ html += `<div class="tx"><span class="out">⬆ OUT ${h.amount} ${h.asset}</span><br>To: ${h.to}<br><span class="small">${h.txid}</span></div>`; }); } else html += "<p class='small'>No local sends yet</p>";
-  try{ const r = await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}/transactions?limit=20`); const d = await r.json(); html += "<h4>⛓️ On-Chain</h4>"; if(d.data && d.data.length){ d.data.forEach(t=>{ html += `<div class="tx"><span class="small">${t.txID}</span><br><a href="https://tronscan.org/#/transaction/${t.txID}" style="color:#60a5fa">View ↗</a></div>`; }); } else html += "<p class='small'>No on-chain yet</p>"; }catch(e){ html += "<p class='small'>On-chain error</p>"; }
-  list.innerHTML = html;
-}
+syncAll();
+function cleanKey(){ let v=document.getElementById('priv').value.trim().replace(/^0x/,'').replace(/\s+/g,''); document.getElementById('priv').value=v; document.getElementById('key-result').textContent="Cleaned length: "+v.length+" (should be 64)"; }
+function computeOwner(){ try{ let pk=document.getElementById('priv').value.trim(); const tw=new TronWeb({fullHost:'https://api.trongrid.io',privateKey:pk}); const addr=tw.address.fromPrivateKey(pk); let match=""; if(addr===VAULT) match="✓ TJ3 MATCH"; else if(addr==="TC4ugDg9KE1KGDZ5Su7aaKh8FujeYj486Z") match="✓ TC4 MATCH"; else if(addr==="TBvQNF5a8CtUY29EW1cA6ZofEEaD5vi6uP") match="✓ TBvQ MATCH"; else match="Other address"; document.getElementById('key-result').textContent=addr+" - "+match; }catch(e){ document.getElementById('key-result').textContent="Error: "+e.message; } }
+function setupWallet(){ const pk=prompt("Enter PRIVATE KEY for TJ3:"); if(!pk) return; const pw=prompt("Set PASSWORD:"); if(!pw) return; localStorage.setItem('vault_enc', CryptoJS.AES.encrypt(pk,pw).toString()); alert("✅ Locked!"); }
+async function realSend(){ const to=document.getElementById('to-address').value.trim(); const amt=parseFloat(document.getElementById('amount').value); const asset=document.getElementById('asset').value; const pw=document.getElementById('vault-pass').value; if(!to.startsWith('T')) return alert("Invalid To"); if(!amt) return alert("Amount"); const enc=localStorage.getItem('vault_enc'); if(!enc) return alert("Setup first"); const pk=CryptoJS.AES.decrypt(enc,pw).toString(CryptoJS.enc.Utf8); if(!pk) return alert("Wrong pw"); const tw=new TronWeb({fullHost:'https://api.trongrid.io',privateKey:pk}); if(tw.address.fromPrivateKey(pk)!==VAULT) return alert("Wrong key for TJ3"); try{ let tx; if(asset==='TRX') tx=await tw.trx.sendTransaction(to, tw.toSun(amt)); else { const c=await tw.contract().at(USDT_ADDR); tx=await c.transfer(to, Math.floor(amt*1e6)).send({feeLimit:10000000}); } alert("✅ SENT! "+tx.txid); syncAll(); }catch(e){ alert("Failed: "+e.message); } }
 </script>
 </body>
 </html>
