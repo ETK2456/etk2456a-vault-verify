@@ -2,100 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TJ3 Race Vault v16</title>
+<title>TEXJ Safe Vault v17 - New Main</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
 <script>window.Buffer = buffer.Buffer;</script>
 <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
-body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:560px;margin:auto}
+body{background:#0a0a0f;color:#fff;font-family:system-ui;padding:16px;max-width:480px;margin:auto}
 .card{background:#15151f;border-radius:16px;padding:16px;margin:12px 0}
 input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#222;color:#fff;margin:8px 0;box-sizing:border-box}
 button{width:100%;padding:14px;border-radius:12px;border:0;font-weight:700;margin:6px 0;cursor:pointer}
-.yellow{background:#facc15;color:#000}.green{background:#22c55e;color:#000}.gray{background:#333;color:#fff}.red{background:#ef4444;color:#fff}
-.small{font-size:12px;color:#aaa}.row{border-bottom:1px solid #333;padding:10px 0;font-size:13px}
-.race-on{background:#ef4444!important;animation:blink 1s infinite}
-@keyframes blink{50%{opacity:0.7}}
+.yellow{background:#facc15;color:#000}.green{background:#22c55e;color:#000}.gray{background:#333;color:#fff}
+.small{font-size:12px;color:#aaa}.tx{border-bottom:1px solid #333;padding:10px 0;font-size:13px}.out{color:#f87171}.in{color:#22c55e}
+.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1;padding:10px}.active-tab{background:#facc15!important;color:#000!important}
 </style>
 </head>
 <body>
-<h2>🏁 TJ3 RACE Vault - V16</h2>
-<div class="small">TJ3: TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg • SAFE: TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz</div>
-<div class="card" style="border:2px solid #ef4444">
-<h3>🏁 RACE MODE vs 15-sec Bot</h3>
-<div class="small">Bot sweeps in ~15 sec when TRX hits TJ3. This watches every 2 sec and auto-sends USDT to SAFE the instant TRX appears. Manual = 60 sec (lose). Race = 2 sec (win).</div>
-<button id="race-btn" class="gray" onclick="toggleRace()">⚪ RACE MODE: OFF - Tap to Arm</button>
-<div class="small" id="race-status">Race off</div>
-<div class="small" id="race-log"></div>
+<h2>🛡️ TEXJ SAFE Vault - V17 New Main</h2>
+<div class="small">SAFE: TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz • Single-sig • You control 100% • Old TJ3 is bot-locked</div>
+<div class="tabs"><button id="tab-balance" class="gray active-tab" onclick="showTab('balance')">💰 Balance</button><button id="tab-history" class="gray" onclick="showTab('history')">📜 History</button></div>
+<div id="view-balance">
+<div class="card"><h3 id="total">Loading...</h3><div>TRX: <b id="trx-bal">--</b> • USDT: <b id="usdt-bal">--</b></div><div class="small">Last synced: <span id="sync-time">--</span></div><button class="gray" onclick="fetchBalance()">↻ Refresh Balance</button><div class="small" id="bal-error"></div></div>
+<div class="card"><h3>📥 Receive</h3><img id="receive-qr" style="width:180px;background:#fff;padding:8px;border-radius:12px"><p style="word-break:break-all;font-size:13px">TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz</p><button class="green" onclick="copyAddr()">Copy Address</button></div>
+<div class="card"><h3>📤 Send</h3><select id="asset"><option>USDT</option><option>TRX</option></select><input id="to-address" placeholder="To: Paste Bybit / any address"><input id="amount" type="number" placeholder="Amount: 1"><button class="gray" onclick="doMax()">MAX (balance - fee)</button><div class="small">Fee ~13.5 TRX • Single-sig = Instant send, no bot race</div><input id="vault-pass" type="password" placeholder="Vault password"><button class="yellow" onclick="realSend()">Send Now - Real Broadcast</button><button class="gray" onclick="setupWallet()">Setup / Lock Vault</button></div>
 </div>
-<button class="yellow" onclick="syncAll()">🔄 SYNC ALL 5 WALLETS</button>
-<div id="wallets"></div>
-<div class="card"><h3>🔑 Keys for Race (need BOTH for 2-of-2)</h3>
-<input id="key1" type="password" placeholder="Key 1 - TJ3 private">
-<input id="key2" type="password" placeholder="Key 2 - TC4 private (bot key if you have it)">
-<div class="small">Race will sign with Key1. If you have Key2, it will try multisig. If not, it tries single-sign and warns if threshold fails.</div>
-<button class="gray" onclick="saveKeys()">SAVE KEYS (encrypted local)</button>
-</div>
-<div class="card"><h3>📤 Manual Send (if Race fails)</h3>
-<select id="asset"><option>USDT</option><option>TRX</option></select>
-<input id="to-address" value="TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz">
-<input id="amount" type="number" value="1312.11">
-<input id="vault-pass" type="password" placeholder="Vault password">
-<button class="yellow" onclick="realSend()">Send Now to SAFE</button>
-</div>
+<div id="view-history" style="display:none"><div class="card"><h3>📜 History</h3><button class="gray" onclick="fetchHistory()">↻ Refresh History</button><div id="history-list"></div></div></div>
 <script>
-const VAULT="TJ3uPj9xyf9j4HbMXWqn1ndZDFSnv4CwRg";
-const SAFE="TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz";
+const VAULT="TEXJFvBxgWvXdKziwFFRA59F6JKSgXZuCz";
 const USDT_ADDR="TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-const WALLETS=[{name:"TJ3 TARGET",addr:VAULT},{name:"TC4 OWNER",addr:"TC4ugDg9KE1KGDZ5Su7aaKh8FujeYj486Z"},{name:"TEXJ SAFE",addr:SAFE},{name:"BYBIT",addr:"TYi27YZoGnA8QNFuvXtuL2tpGJoLvnriDz"},{name:"TBvQ FUNDING",addr:"TBvQNF5a8CtUY29EW1cA6ZofEEaD5vi6uP"}];
-let raceOn=false, raceInterval=null, raceFired=false;
-function log(m){ document.getElementById('race-log').innerHTML += m+"<br>"; }
-function toggleRace(){
-  raceOn=!raceOn;
-  const b=document.getElementById('race-btn');
-  if(raceOn){ b.textContent="🔴 RACE MODE: ARMED - Watching every 2 sec"; b.className="red race-on"; document.getElementById('race-status').textContent="ARMED - Will auto-send 1312.11 USDT to TEXJ when TRX > 13"; raceFired=false; raceInterval=setInterval(checkRace,2000); log("Race armed at "+new Date().toLocaleTimeString()); }
-  else { b.textContent="⚪ RACE MODE: OFF"; b.className="gray"; document.getElementById('race-status').textContent="Race off"; clearInterval(raceInterval); }
+document.getElementById('receive-qr').src=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${VAULT}`;
+function showTab(t){ document.getElementById('view-balance').style.display=t==='balance'?'block':'none'; document.getElementById('view-history').style.display=t==='history'?'block':'none'; document.getElementById('tab-balance').className=t==='balance'?'gray active-tab':'gray'; document.getElementById('tab-history').className=t==='history'?'gray active-tab':'gray'; if(t==='history') fetchHistory(); }
+function copyAddr(){ navigator.clipboard.writeText(VAULT); alert("Copied!"); }
+async function fetchBalance(){
+  document.getElementById('bal-error').textContent="Syncing via TronGrid...";
+  try{ const r=await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}`); const d=await r.json(); if(!d.data||!d.data.length) throw new Error("No account - fund TEXJ with 1 TRX to activate"); const a=d.data[0]; const trx=(a.balance||0)/1e6; let usdt=0; if(a.trc20){ if(Array.isArray(a.trc20)){ let f=a.trc20.find(t=>t[USDT_ADDR]); if(f) usdt=f[USDT_ADDR]/1e6; } else if(a.trc20[USDT_ADDR]) usdt=a.trc20[USDT_ADDR]/1e6; } document.getElementById('trx-bal').textContent=trx.toFixed(2); document.getElementById('usdt-bal').textContent=usdt.toFixed(2); document.getElementById('total').textContent="$"+(trx*0.3288+usdt).toFixed(2)+" TOTAL"; document.getElementById('sync-time').textContent=new Date().toLocaleTimeString(); document.getElementById('bal-error').textContent="✅ Synced - TEXJ Safe Real"; }catch(e){ document.getElementById('bal-error').textContent="❌ "+e.message; }
 }
-async function checkRace(){
-  if(raceFired) return;
-  try{
-    const r=await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}`);
-    const d=await r.json();
-    if(!d.data || !d.data.length) return;
-    const acc=d.data[0]; const trx=(acc.balance||0)/1e6;
-    document.getElementById('race-status').textContent=`Watching... TJ3 TRX: ${trx.toFixed(2)} - Need >13 to fire`;
-    if(trx>13){
-      raceFired=true; log("🔥 TRX DETECTED "+trx+" at "+new Date().toLocaleTimeString()+" - FIRING!");
-      await raceSend();
-    }
-  }catch(e){ log("Watch error: "+e.message); }
-}
-async function raceSend(){
-  try{
-    const pw=document.getElementById('vault-pass').value;
-    let pk1=document.getElementById('key1').value.trim();
-    if(!pk1){ const enc=localStorage.getItem('vault_enc'); if(!enc) return alert("No key saved - Save Keys first"); pk1=CryptoJS.AES.decrypt(enc,pw).toString(CryptoJS.enc.Utf8); }
-    const tw=new TronWeb({fullHost:'https://api.trongrid.io',privateKey:pk1});
-    const c=await tw.contract().at(USDT_ADDR);
-    // Max fee to outbid bot
-    const tx=await c.transfer(SAFE, Math.floor(1312.11*1e6)).send({feeLimit:20000000});
-    log("✅ RACE WON! TxID: "+tx.txid);
-    alert("🏁 RACE WON! Sent 1312 USDT to SAFE\nTxID: "+tx.txid);
-    navigator.clipboard.writeText(tx.txid);
-    toggleRace(); syncAll();
-  }catch(e){ log("Race failed: "+e.message); alert("Race failed: "+e.message+" - Try manual with both keys"); }
-}
-async function syncAll(){
-  let html="";
-  for(let w of WALLETS){
-    try{ const r=await fetch(`https://api.trongrid.io/v1/accounts/${w.addr}`); const d=await r.json(); let trx=0,usdt=0; if(d.data&&d.data.length){ const a=d.data[0]; trx=(a.balance||0)/1e6; if(a.trc20){ if(Array.isArray(a.trc20)){ let f=a.trc20.find(t=>t[USDT_ADDR]); if(f) usdt=f[USDT_ADDR]/1e6; } else if(a.trc20[USDT_ADDR]) usdt=a.trc20[USDT_ADDR]/1e6; } } html+=`<div class="card"><b>${w.name}</b><br><span class="small">${w.addr}</span><br>TRX: ${trx.toFixed(2)} • USDT: ${usdt.toFixed(2)}</div>`; }catch(e){ html+=`<div class="card"><b>${w.name}</b> Failed</div>`; }
-  }
-  document.getElementById('wallets').innerHTML=html;
-}
-syncAll();
-function saveKeys(){ const k1=document.getElementById('key1').value; const pw=prompt("Set vault password to encrypt keys:"); if(!k1||!pw) return; localStorage.setItem('vault_enc', CryptoJS.AES.encrypt(k1,pw).toString()); alert("✅ Keys saved encrypted!"); }
-async function realSend(){ const to=document.getElementById('to-address').value.trim(); const amt=parseFloat(document.getElementById('amount').value); const asset=document.getElementById('asset').value; const pw=document.getElementById('vault-pass').value; const enc=localStorage.getItem('vault_enc'); if(!enc) return alert("Save Keys first"); const pk=CryptoJS.AES.decrypt(enc,pw).toString(CryptoJS.enc.Utf8); const tw=new TronWeb({fullHost:'https://api.trongrid.io',privateKey:pk}); try{ let tx; if(asset==='TRX') tx=await tw.trx.sendTransaction(to, tw.toSun(amt)); else { const c=await tw.contract().at(USDT_ADDR); tx=await c.transfer(to, Math.floor(amt*1e6)).send({feeLimit:20000000}); } alert("✅ SENT "+tx.txid); }catch(e){ alert("Failed: "+e.message); } }
+fetchBalance();
+function doMax(){ const a=document.getElementById('asset').value; const b=parseFloat(document.getElementById(a==='TRX'?'trx-bal':'usdt-bal').textContent); if(isNaN(b)) return alert("Refresh first"); document.getElementById('amount').value=Math.max(0,b-(a==='TRX'?13.5:1.5)).toFixed(2); }
+function setupWallet(){ const pk=prompt("Enter PRIVATE KEY for TEXJ Safe:"); if(!pk) return; const pw=prompt("Set PASSWORD:"); if(!pw) return; localStorage.setItem('vault_enc',CryptoJS.AES.encrypt(pk,pw).toString()); alert("✅ Locked!"); }
+async function realSend(){ const to=document.getElementById('to-address').value.trim(); const amt=parseFloat(document.getElementById('amount').value); const asset=document.getElementById('asset').value; const pw=document.getElementById('vault-pass').value; if(!to.startsWith('T')) return alert("Invalid To"); if(!amt) return alert("Amount"); const enc=localStorage.getItem('vault_enc'); if(!enc) return alert("Setup first"); const pk=CryptoJS.AES.decrypt(enc,pw).toString(CryptoJS.enc.Utf8); if(!pk) return alert("Wrong pw"); const tw=new TronWeb({fullHost:'https://api.trongrid.io',privateKey:pk}); const d=tw.address.fromPrivateKey(pk); if(d!==VAULT) return alert("❌ WRONG KEY for TEXJ! Got "+d); try{ let tx; if(asset==='TRX') tx=await tw.trx.sendTransaction(to, tw.toSun(amt)); else { const c=await tw.contract().at(USDT_ADDR); tx=await c.transfer(to, Math.floor(amt*1e6)).send({feeLimit:10000000}); } let h=JSON.parse(localStorage.getItem('vault_tx_history')||'[]'); h.unshift({txid:tx.txid,to:to,amount:amt,asset:asset,time:Date.now()}); localStorage.setItem('vault_tx_history',JSON.stringify(h.slice(0,20))); alert("✅ SENT! "+tx.txid); navigator.clipboard.writeText(tx.txid); fetchBalance(); }catch(e){ alert("Failed: "+e.message); } }
+async function fetchHistory(){ const l=document.getElementById('history-list'); let html=""; let local=JSON.parse(localStorage.getItem('vault_tx_history')||'[]'); if(local.length){ html+="<h4>📱 This App</h4>"; local.forEach(h=>{ html+=`<div class="tx"><span class="out">⬆ OUT ${h.amount} ${h.asset}</span><br>To: ${h.to}<br><span class="small">${h.txid}</span></div>`; }); } else html+="<p class='small'>No local sends yet</p>"; try{ const r=await fetch(`https://api.trongrid.io/v1/accounts/${VAULT}/transactions?limit=20`); const d=await r.json(); html+="<h4>⛓️ On-Chain</h4>"; if(d.data&&d.data.length){ d.data.forEach(t=>{ html+=`<div class="tx"><span class="small">${t.txID}</span><br><a href="https://tronscan.org/#/transaction/${t.txID}" style="color:#60a5fa">View ↗</a></div>`; }); } else html+="<p class='small'>No on-chain yet</p>"; }catch(e){ html+="<p class='small'>On-chain error</p>"; } l.innerHTML=html; }
 </script>
 </body>
 </html>
